@@ -1,34 +1,66 @@
-// Configure this before publishing: use the inbox where website enquiries should arrive.
 const CONTACT_EMAIL = "mlocalboost@gmail.com";
+const FORM_ENDPOINT = `https://formsubmit.co/ajax/${CONTACT_EMAIL}`;
 
 document.getElementById("year").textContent = new Date().getFullYear();
 
 const menuButton = document.querySelector(".menu-toggle");
 const nav = document.querySelector(".nav");
+
 menuButton.addEventListener("click", () => {
   const open = nav.classList.toggle("open");
   menuButton.setAttribute("aria-expanded", String(open));
   menuButton.setAttribute("aria-label", open ? "Close navigation" : "Open navigation");
 });
+
 nav.querySelectorAll("a").forEach(link => link.addEventListener("click", () => {
   nav.classList.remove("open");
   menuButton.setAttribute("aria-expanded", "false");
 }));
 
-document.getElementById("lead-form").addEventListener("submit", event => {
+const leadForm = document.getElementById("lead-form");
+const formNote = document.getElementById("form-note");
+
+leadForm.addEventListener("submit", async event => {
   event.preventDefault();
-  const form = event.currentTarget;
-  if (!form.reportValidity()) return;
-  if (!CONTACT_EMAIL || CONTACT_EMAIL === "REPLACE_WITH_YOUR_EMAIL") {
-    document.getElementById("form-note").textContent =
-      "The form is ready, but the business inbox has not been configured yet. Add your email in script.js before publishing.";
-    return;
+  if (!leadForm.reportValidity()) return;
+
+  const submitButton = leadForm.querySelector('button[type="submit"]');
+  const originalButtonHTML = submitButton.innerHTML;
+
+  submitButton.disabled = true;
+  submitButton.textContent = "Sending...";
+  formNote.textContent = "Sending your enquiry...";
+
+  const data = Object.fromEntries(new FormData(leadForm).entries());
+  data._subject = "New website enquiry — Local Boost Media";
+  data._replyto = data.email;
+  data._template = "table";
+
+  try {
+    const response = await fetch(FORM_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify(data)
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || result.success === false || result.success === "false") {
+      throw new Error("Submission failed");
+    }
+
+    formNote.textContent =
+      "Thank you! Your enquiry has been sent. We'll be in touch soon.";
+    leadForm.reset();
+
+  } catch (error) {
+    formNote.textContent =
+      "We couldn't send your enquiry. Please email mlocalboost@gmail.com directly.";
+  } finally {
+    submitButton.disabled = false;
+    submitButton.innerHTML = originalButtonHTML;
   }
-  const data = new FormData(form);
-  const subject = encodeURIComponent("New website enquiry — Local Boost Media");
-  const body = encodeURIComponent(
-    `Name: ${data.get("name")}\nBusiness: ${data.get("business") || "Not provided"}\nEmail: ${data.get("email")}\nPhone: ${data.get("phone") || "Not provided"}\n\nWhat they need:\n${data.get("message")}`
-  );
-  window.location.href = `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
-  document.getElementById("form-note").textContent = "Your email app should open with the enquiry prepared. Review it and press Send.";
 });
