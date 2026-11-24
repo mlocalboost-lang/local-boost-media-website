@@ -34,8 +34,7 @@ leadForm.addEventListener("submit", async event => {
   const data = Object.fromEntries(new FormData(leadForm).entries());
   data._subject = "New website enquiry — Local Boost Media";
   data._replyto = data.email;
-  data._template = "table";
-
+data._honey = data._honey || "";
   try {
     const response = await fetch(FORM_ENDPOINT, {
       method: "POST",
