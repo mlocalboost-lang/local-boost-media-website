@@ -1,5 +1,5 @@
 // Configure this before publishing: use the inbox where website enquiries should arrive.
-const CONTACT_EMAIL = "REPLACE_WITH_YOUR_EMAIL";
+const CONTACT_EMAIL = "mlocalboost@gmail.com";
 
 document.getElementById("year").textContent = new Date().getFullYear();
 
